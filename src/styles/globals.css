@@ -1,0 +1,241 @@
+/* ──────────────────────────────────────────────
+   Tailwind Base Imports
+─────────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────
+   Font Defaults
+─────────────────────────────────────────────── */
+html {
+  font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* ──────────────────────────────────────────────
+   Light/Dark Mode Variables
+─────────────────────────────────────────────── */
+:root {
+  --yms-blue: #0d3e8c;
+  --yms-yellow: #ffc627;
+  --yms-tan: #f5deb3;
+  --yms-body-bg: #ffffff;
+  --yms-body-fg: #1f2937;
+}
+
+.dark {
+  --yms-body-bg: #0d1117;
+  --yms-body-fg: #f1f5f9;
+}
+
+body {
+  background-color: var(--yms-body-bg);
+  color: var(--yms-body-fg);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 1.05rem;
+}
+
+/* ──────────────────────────────────────────────
+   Section & Label Styling
+─────────────────────────────────────────────── */
+.label-yellow {
+  color: var(--yms-yellow);
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+}
+
+.dark .label-yellow {
+  color: #5ea4f3;
+}
+
+.section-header-blue {
+  color: var(--yms-blue);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.dark .section-header-blue {
+  color: #5ea4f3;
+}
+
+/* ──────────────────────────────────────────────
+   Card Styling
+─────────────────────────────────────────────── */
+.card-light {
+  background-color: #f9fafb;
+}
+
+.dark .card-light {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+/* ──────────────────────────────────────────────
+   Print & PDF Styling (Grayscale Safe)
+─────────────────────────────────────────────── */
+@media print {
+  color-scheme: light dark;
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 14pt !important;
+    font-family: 'Open Sans', sans-serif !important;
+    line-height: 1.6 !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    filter: none !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box !important;
+  }
+
+  .label-yellow,
+  .section-header-blue {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 1.25rem !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    background-color: #e0e0e0;
+    border: 2px solid black;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+  }
+
+  .pdf-output-box {
+    border: 2px solid black;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    background-color: #e0e0e0;
+  }
+
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
+  @page {
+    size: auto;
+    margin: 0.75in;
+  }
+
+  .print-page-break {
+    page-break-before: always;
+  }
+}
+
+/* ──────────────────────────────────────────────
+   PDF Specific Cleanup for Canvas Export
+─────────────────────────────────────────────── */
+.print-grayscale * {
+  all: revert !important;
+  font-family: 'Open Sans', sans-serif !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  filter: grayscale(100%) !important;
+  box-sizing: border-box !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.45 !important;
+}
+
+.print-grayscale {
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 1rem;
+  font-family: 'Open Sans', sans-serif !important;
+  font-size: 13.5pt !important;
+}
+
+.print-grayscale h1,
+.print-grayscale h2,
+.print-grayscale h3 {
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: bold !important;
+  color: #000000 !important;
+  font-size: 1.5rem !important;
+}
+
+.print-grayscale .label-yellow,
+.print-grayscale .section-header-blue {
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 1.25rem !important;
+}
+
+/* ──────────────────────────────────────────────
+   Input & Dropdown Enhancements
+─────────────────────────────────────────────── */
+input,
+select,
+textarea {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #000000;
+  border-radius: 0.25rem;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+select option {
+  font-size: 0.95rem;
+  font-family: 'Open Sans', sans-serif;
+  color: #000000;
+}
+
+.dark select option {
+  color: #ffffff;
+}
+
+button {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+/* ──────────────────────────────────────────────
+   Utility: Screen Reader Only
+─────────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
