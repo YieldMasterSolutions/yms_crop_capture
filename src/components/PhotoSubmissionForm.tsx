@@ -1,132 +1,216 @@
-// File: PhotoSubmissionForm.tsx
-
+// src/components/PhotoSubmissionForm.tsx
 "use client";
 
 import React, { useState } from "react";
-import { extractGPS } from "../utils/exifUtils";
-import ResultsDisplay from "./ResultsDisplay";
-import { seedTypes, productsSeedTreatment } from "../utils/data";
+import { createClient } from "@supabase/supabase-js";
+import * as exifr from "exifr";
 
-interface PhotoData {
-  imageUrl: string;
-  latitude?: number;
-  longitude?: number;
-  timestamp?: string;
-  cropType?: string;
-  fieldName?: string;
-  notes?: string;
-  productUsed?: string;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+interface SubmissionData {
+  grower_name: string;
+  dealer_name: string;
+  crop_type: string;
+  product_used: string;
+  upload_type: string;
+  notes: string;
+  image_url: string;
+  latitude: number | null;
+  longitude: number | null;
+  timestamp: string | null;
 }
 
-const PhotoSubmissionForm: React.FC = () => {
+interface PhotoSubmissionFormProps {
+  onSuccess: (data: SubmissionData) => void;
+}
+
+const PhotoSubmissionForm: React.FC<PhotoSubmissionFormProps> = ({ onSuccess }) => {
   const [growerName, setGrowerName] = useState("");
-  const [repName, setRepName] = useState("");
+  const [dealerName, setDealerName] = useState("");
   const [cropType, setCropType] = useState("");
   const [productUsed, setProductUsed] = useState("");
-  const [fieldName, setFieldName] = useState("");
+  const [uploadType, setUploadType] = useState("Treated");
   const [notes, setNotes] = useState("");
-  const [treatedPhotos, setTreatedPhotos] = useState<PhotoData[]>([]);
-  const [untreatedPhotos, setUntreatedPhotos] = useState<PhotoData[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, isTreated: boolean) => {
-    const files = e.target.files;
-    if (!files) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSuccess(false);
+    setErrorMessage("");
 
-    const photoDataList: PhotoData[] = await Promise.all(
-      Array.from(files).map(async (file) => {
-        const gps = await extractGPS(file);
-        const timestamp = file.lastModified ? new Date(file.lastModified).toISOString() : undefined;
-        return {
-          imageUrl: URL.createObjectURL(file),
-          latitude: gps?.latitude,
-          longitude: gps?.longitude,
-          timestamp,
-          cropType,
-          fieldName,
-          notes,
-          productUsed,
-        };
-      })
-    );
+    if (!imageFile) {
+      alert("Please select an image file.");
+      return;
+    }
 
-    isTreated ? setTreatedPhotos(photoDataList) : setUntreatedPhotos(photoDataList);
+    setSubmitting(true);
+
+    // Step 1: Attempt EXIF extraction
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    let timestamp: string | null = null;
+
+    try {
+      const exifData = await exifr.parse(imageFile, { gps: true });
+      latitude = exifData?.latitude ?? null;
+      longitude = exifData?.longitude ?? null;
+      timestamp = exifData?.DateTimeOriginal
+        ? new Date(exifData.DateTimeOriginal).toISOString()
+        : null;
+    } catch (exifError) {
+      console.warn("EXIF data extraction failed:", exifError);
+    }
+
+    // Step 2: Upload image to Supabase Storage
+    const fileName = `${Date.now()}_${imageFile.name}`;
+    const { error: storageError } = await supabase.storage
+      .from("canopeo-photos")
+      .upload(fileName, imageFile);
+
+    if (storageError) {
+      console.error("Image upload failed:", storageError);
+      setErrorMessage("Image upload failed. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/canopeo-photos/${fileName}`;
+
+    // Step 3: Insert metadata into Supabase
+    const { error: insertError } = await supabase.from("photo_submissions").insert([
+      {
+        grower_name: growerName,
+        dealer_name: dealerName,
+        crop_type: cropType,
+        product_used: productUsed,
+        notes,
+        upload_type: uploadType,
+        image_url: imageUrl,
+        latitude,
+        longitude,
+        timestamp,
+      },
+    ]);
+
+    if (insertError) {
+      console.error("Metadata insert failed:", insertError);
+      setErrorMessage("Metadata submission failed.");
+    } else {
+      setSuccess(true);
+      onSuccess({
+        grower_name: growerName,
+        dealer_name: dealerName,
+        crop_type: cropType,
+        product_used: productUsed,
+        notes,
+        upload_type: uploadType,
+        image_url: imageUrl,
+        latitude,
+        longitude,
+        timestamp,
+      });
+
+      // Reset form
+      setGrowerName("");
+      setDealerName("");
+      setCropType("");
+      setProductUsed("");
+      setUploadType("Treated");
+      setNotes("");
+      setImageFile(null);
+    }
+
+    setSubmitting(false);
   };
 
-  const allPhotos = [...untreatedPhotos, ...treatedPhotos];
-
   return (
-    <div className="space-y-8">
-      <form className="bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-md space-y-6">
-        <h2 className="section-header-blue">YMS Crop Capture Submission</h2>
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto p-6 bg-white dark:bg-gray-900 shadow-md rounded text-black dark:text-white">
+      <h2 className="text-2xl font-bold mb-4">Submit Field Photo</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="label-yellow">Grower / Cooperator / Plot Name</label>
-            <input value={growerName} onChange={(e) => setGrowerName(e.target.value)} className="w-full" />
-          </div>
+      <label className="block mb-2">Grower / Cooperator / Knowledge Plot Name</label>
+      <input
+        type="text"
+        value={growerName}
+        onChange={(e) => setGrowerName(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+        required
+      />
 
-          <div>
-            <label className="label-yellow">YMS Dealer or Account Manager</label>
-            <input value={repName} onChange={(e) => setRepName(e.target.value)} className="w-full" />
-          </div>
+      <label className="block mb-2">Dealer / Account Manager Name</label>
+      <input
+        type="text"
+        value={dealerName}
+        onChange={(e) => setDealerName(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+      />
 
-          <div>
-            <label className="label-yellow">Crop Type</label>
-            <select
-              value={cropType}
-              onChange={(e) => setCropType(e.target.value)}
-              className="w-full"
-            >
-              <option value="">Select Crop</option>
-              {seedTypes.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+      <label className="block mb-2">Crop Type</label>
+      <select
+        value={cropType}
+        onChange={(e) => setCropType(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+        required
+      >
+        <option value="">Select Crop</option>
+        <option value="Corn">Corn</option>
+        <option value="Soybeans">Soybeans</option>
+        <option value="Wheat">Wheat</option>
+        <option value="Sorghum">Sorghum</option>
+        <option value="Other">Other</option>
+      </select>
 
-          <div>
-            <label className="label-yellow">Product Used</label>
-            <select
-              value={productUsed}
-              onChange={(e) => setProductUsed(e.target.value)}
-              className="w-full"
-            >
-              <option value="">Select Product</option>
-              {productsSeedTreatment.map((p) => (
-                <option key={p["Product Name"]} value={p["Product Name"]}>{p["Product Name"]}</option>
-              ))}
-            </select>
-          </div>
+      <label className="block mb-2">Product Used</label>
+      <input
+        type="text"
+        value={productUsed}
+        onChange={(e) => setProductUsed(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+        required
+      />
 
-          <div>
-            <label className="label-yellow">Field Name</label>
-            <input value={fieldName} onChange={(e) => setFieldName(e.target.value)} className="w-full" />
-          </div>
+      <label className="block mb-2">Upload Type</label>
+      <select
+        value={uploadType}
+        onChange={(e) => setUploadType(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+      >
+        <option value="Treated">Treated</option>
+        <option value="Untreated">Untreated</option>
+      </select>
 
-          <div>
-            <label className="label-yellow">Optional Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full"
-              rows={3}
-            />
-          </div>
-        </div>
+      <label className="block mb-2">Optional Notes</label>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        className="w-full mb-4 p-2 border rounded bg-white dark:bg-gray-800"
+      />
 
-        <div>
-          <label className="section-header-blue">Upload Untreated Control Photos</label>
-          <input type="file" accept="image/*" multiple onChange={(e) => handleUpload(e, false)} />
-        </div>
+      <label className="block mb-2">Photo Upload</label>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+        className="mb-4"
+        required
+      />
 
-        <div>
-          <label className="section-header-blue">Upload Treated Photos</label>
-          <input type="file" accept="image/*" multiple onChange={(e) => handleUpload(e, true)} />
-        </div>
-      </form>
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+        disabled={submitting}
+      >
+        {submitting ? "Submitting..." : "Submit"}
+      </button>
 
-      {allPhotos.length > 0 && <ResultsDisplay photoDataList={allPhotos} />}
-    </div>
+      {success && <p className="text-green-600 mt-4">✅ Submission successful!</p>}
+      {errorMessage && <p className="text-red-600 mt-4">❌ {errorMessage}</p>}
+    </form>
   );
 };
 

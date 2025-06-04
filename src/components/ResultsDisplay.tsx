@@ -1,66 +1,90 @@
-// ResultsDisplay.tsx
+// src/components/ResultsDisplay.tsx
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import { format } from "date-fns";
 
-interface PhotoData {
-  imageUrl: string;
-  latitude?: number;
-  longitude?: number;
-  timestamp?: string;
-  cropType?: string;
-  fieldName?: string;
-  notes?: string;
+interface SubmissionData {
+  grower_name: string;
+  dealer_name: string;
+  crop_type: string;
+  product_used: string;
+  upload_type: string;
+  notes: string;
+  image_url: string;
+  latitude: number | null;
+  longitude: number | null;
+  timestamp: string | null;
 }
 
 interface ResultsDisplayProps {
-  photoDataList: PhotoData[];
+  data: SubmissionData;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ photoDataList }) => {
-  if (photoDataList.length === 0) return null;
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ data }) => {
+  const {
+    grower_name,
+    dealer_name,
+    crop_type,
+    product_used,
+    upload_type,
+    notes,
+    image_url,
+    latitude,
+    longitude,
+    timestamp,
+  } = data;
+
+  const formattedTimestamp = timestamp
+    ? format(new Date(timestamp), "yyyy-MM-dd HH:mm:ss")
+    : "N/A";
 
   return (
-    <div className="mt-10">
-      <h2 className="section-header-blue">Uploaded Photo Summaries</h2>
-      <div className="grid grid-cols-1 gap-6">
-        {photoDataList.map((data, index) => (
-          <div
-            key={index}
-            className="card-light p-4 rounded-lg shadow-md border border-gray-300"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex justify-center items-center">
-                {data.imageUrl ? (
-                  <Image
-                    src={data.imageUrl}
-                    alt={`Uploaded photo ${index + 1}`}
-                    width={300}
-                    height={300}
-                    className="rounded-lg object-contain"
-                  />
-                ) : (
-                  <p>No image available</p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div className="label-yellow">Crop Type</div>
-                <div>{data.cropType || "—"}</div>
-                <div className="label-yellow">Field Name</div>
-                <div>{data.fieldName || "—"}</div>
-                <div className="label-yellow">Latitude</div>
-                <div>{data.latitude?.toFixed(6) || "—"}</div>
-                <div className="label-yellow">Longitude</div>
-                <div>{data.longitude?.toFixed(6) || "—"}</div>
-                <div className="label-yellow">Timestamp</div>
-                <div>{data.timestamp || "—"}</div>
-                <div className="label-yellow">Notes</div>
-                <div>{data.notes || "—"}</div>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 shadow-md rounded text-black dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 border-b pb-2">Submission Summary</h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div>
+          <p className="font-semibold text-yellow-600">Grower / Cooperator</p>
+          <p>{grower_name}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Dealer / Account Manager</p>
+          <p>{dealer_name}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Crop Type</p>
+          <p>{crop_type}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Product Used</p>
+          <p>{product_used}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Upload Type</p>
+          <p>{upload_type}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Timestamp</p>
+          <p>{formattedTimestamp}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Latitude</p>
+          <p>{latitude ?? "N/A"}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-yellow-600">Longitude</p>
+          <p>{longitude ?? "N/A"}</p>
+        </div>
+        <div className="sm:col-span-2">
+          <p className="font-semibold text-yellow-600">Optional Notes</p>
+          <p>{notes || "N/A"}</p>
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
+        <p className="font-semibold text-yellow-600 mb-2">Photo Preview</p>
+        <img src={image_url} alt="Uploaded field" className="w-full max-w-lg rounded shadow" />
       </div>
     </div>
   );

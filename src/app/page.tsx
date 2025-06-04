@@ -1,33 +1,34 @@
-// File: page.tsx
-
+// src/app/page.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import PhotoSubmissionForm from "../components/PhotoSubmissionForm";
-import ThemeToggle from "../components/ThemeToggle";
-import Image from "next/image";
+import ResultsDisplay from "../components/ResultsDisplay";
 
-export default function YMSCropCaptureApp() {
+interface SubmissionData {
+  growerName: string;
+  dealerName: string;
+  cropType: string;
+  productUsed: string;
+  notes?: string;
+  uploadType: string;
+  imageUrl: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export default function Home() {
+  const [submittedData, setSubmittedData] = useState<SubmissionData | null>(null);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 space-y-6">
-      {/* Header with logos */}
-      <div className="flex items-center justify-between max-w-6xl mx-auto">
-        <Image src="/legend-logo.png" alt="Legend Logo" width={120} height={60} />
-        <h1 className="text-3xl font-bold text-center flex-1 text-yellow-500 dark:text-yellow-300">
-          YMS Crop Capture
-        </h1>
-        <Image src="/yms-logo.png" alt="YMS Logo" width={120} height={60} />
+    <main className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+      <h1 className="text-3xl font-bold text-center text-black dark:text-white mb-6">
+        YMS Crop Capture
+      </h1>
+      <div className="max-w-3xl mx-auto">
+        <PhotoSubmissionForm onSuccess={setSubmittedData} />
+        {submittedData && <ResultsDisplay data={submittedData} />}
       </div>
-
-      {/* Theme Toggle */}
-      <div className="flex justify-end max-w-6xl mx-auto">
-        <ThemeToggle />
-      </div>
-
-      {/* Form Section */}
-      <div className="max-w-4xl mx-auto">
-        <PhotoSubmissionForm />
-      </div>
-    </div>
+    </main>
   );
 }
