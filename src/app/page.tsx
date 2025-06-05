@@ -4,30 +4,30 @@
 import React, { useState } from "react";
 import PhotoSubmissionForm from "../components/PhotoSubmissionForm";
 import ResultsDisplay from "../components/ResultsDisplay";
+import PDFDownloadButton from "../components/PDFDownloadButton";
+import { SubmissionData } from "../types/submission";
 
-interface SubmissionData {
-  growerName: string;
-  dealerName: string;
-  cropType: string;
-  productUsed: string;
-  notes?: string;
-  uploadType: string;
-  imageUrl: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-export default function Home() {
+export default function HomePage() {
   const [submittedData, setSubmittedData] = useState<SubmissionData | null>(null);
 
   return (
-    <main className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-      <h1 className="text-3xl font-bold text-center text-black dark:text-white mb-6">
-        YMS Crop Capture
+    <main className="min-h-screen bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-white p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        YMS Crop Capture App
       </h1>
+
       <div className="max-w-3xl mx-auto">
-        <PhotoSubmissionForm onSuccess={setSubmittedData} />
-        {submittedData && <ResultsDisplay data={submittedData} />}
+        {/* FIXED: Now uses explicit function to satisfy type */}
+        <PhotoSubmissionForm onSuccess={(data) => setSubmittedData(data)} />
+
+        {submittedData && (
+          <>
+            <ResultsDisplay data={submittedData} />
+            <div className="mt-6 text-center">
+              <PDFDownloadButton data={submittedData} />
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
