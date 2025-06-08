@@ -1,11 +1,10 @@
 {
-  "name": "yms_combined_calculator",
+  "name": "yms_crop_capture",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "deploy": "next build && npx gh-pages -d out -b gh-pages -f",
     "start": "next start",
     "lint": "next lint"
   },
@@ -14,13 +13,9 @@
     "@supabase/supabase-js": "^2.49.10",
     "date-fns": "^4.1.0",
     "exifr": "^7.1.3",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
     "next": "15.2.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-to-print": "^3.0.6",
-    "ts-node": "^10.9.2"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -30,7 +25,6 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
-    "gh-pages": "^6.0.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.3",
     "typescript": "^5"
